@@ -20,7 +20,10 @@ if (!GROQ_API_KEY) {
 const allowedOrigins = [
     'http://localhost:3000',
     'http://192.168.1.38:3000',
-    'https://dsdiff.web.app'
+    'https://dsdiff.web.app',
+    'https://dsa-notes-app.web.app',
+    'https://dsdiff.com',
+    'https://www.dsdiff.com'
 ];
 
 app.use(cors({
