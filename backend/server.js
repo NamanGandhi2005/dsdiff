@@ -43,7 +43,7 @@ app.use(cors({
 app.use(express.json({ limit: '5mb' }));
 
 // --- Helper to call Groq API (aliased as callGeminiOnPi for route compatibility) ---
-const FALLBACK_GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"];
+const FALLBACK_GROQ_MODELS = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"];
 
 async function callGeminiOnPi(prompt, isJson = false) {
     if (!GROQ_API_KEY) {
@@ -65,7 +65,8 @@ async function callGeminiOnPi(prompt, isJson = false) {
                         content: prompt
                     }
                 ],
-                temperature: 0.3
+                temperature: 0.3,
+                max_completion_tokens: 4096
             };
 
             if (isJson) {
