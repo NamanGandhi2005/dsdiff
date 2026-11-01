@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { signOut } from '../../features/auth/authSlice'; // Ensure this path is correct
 import ThemeToggleButton from '../UI/ThemeToggleButton'; // Ensure this path is correct
-import { Menu, X, BookOpen, LogOut, LayoutDashboard, Settings, Code } from 'lucide-react'; // Removed unused icons
+import { Menu, X, BookOpen, LogOut, LayoutDashboard, Settings, Code, Video, Dumbbell } from 'lucide-react'; // Removed unused icons
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -38,8 +38,14 @@ const Navbar = () => {
             <Link to="/notes" className={linkClasses} onClick={() => isMobile && setMobileMenuOpen(false)}>
                 <BookOpen size={iconSize} className="mr-1.5" /> My Notes
             </Link>
+            <Link to="/practice" className={linkClasses} onClick={() => isMobile && setMobileMenuOpen(false)}>
+                <Dumbbell size={iconSize} className="mr-1.5" /> Practice
+            </Link>
             <Link to="/ai/explain-topic" className={linkClasses} onClick={() => isMobile && setMobileMenuOpen(false)}>
                 <Code size={iconSize} className="mr-1.5" /> AI Explain
+            </Link>
+            <Link to="/interview/setup" className={linkClasses} onClick={() => isMobile && setMobileMenuOpen(false)}>
+                <Video size={iconSize} className="mr-1.5" /> AI Interview
             </Link>
             {/* --- ADDED SETTINGS LINK HERE --- */}
             <Link to="/settings" className={linkClasses} onClick={() => isMobile && setMobileMenuOpen(false)}>

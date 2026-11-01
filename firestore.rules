@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownsNew() {
+      return signedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    function ownsExisting() {
+      return signedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /notes/{noteId} {
+      allow read, update, delete: if ownsExisting();
+      allow create: if ownsNew();
+    }
+
+    match /publicNotes/{noteId} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /mistakes/{mistakeId} {
+      allow read, update, delete: if ownsExisting();
+      allow create: if ownsNew();
+    }
+
+    match /interviews/{interviewId} {
+      allow read, update, delete: if ownsExisting();
+      allow create: if ownsNew();
+    }
+
+    match /studyDays/{dayId} {
+      allow read: if ownsExisting();
+      allow create, update: if ownsNew() && dayId.matches(request.auth.uid + '_.*');
+    }
+
+    match /dsa_topics/{topicId} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+  }
+}

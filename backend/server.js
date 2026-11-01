@@ -4,8 +4,11 @@ const express = require('express');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
 const axios = require('axios');
+const multer = require('multer');
+const pdfParse = require('pdf-parse');
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
 const PORT = process.env.PI_SERVER_PORT || 3001;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
@@ -350,6 +353,120 @@ app.post('/api/export-pdf', async (req, res) => {
     }
 });
 
+
+// --- NEW AI INTERVIEW ENDPOINTS ---
+app.post('/api/interview/generate-questions', upload.single('resume'), async (req, res) => {
+    try {
+        const { techStack, experience, notesContext } = req.body;
+        let resumeText = '';
+
+        if (req.file) {
+            const data = await pdfParse(req.file.buffer);
+            resumeText = data.text;
+        } else if (req.body.resumeText) {
+            resumeText = req.body.resumeText;
+        }
+
+        console.log(`[${new Date().toISOString()}] POST /api/interview/generate-questions received. Resume Length: ${resumeText.length}`);
+
+        const prompt = `You are an expert technical interviewer.
+Based on the following candidate profile, generate exactly 5 interview questions.
+Each question MUST be an object with a "question" string key.
+Return ONLY a JSON object with a single key "questions" containing the array of these 5 objects.
+
+Candidate Profile:
+Tech Stack: ${techStack || 'General Software Engineering'}
+Experience Level: ${experience || 'Mid Level'}
+Resume Snippet: ${resumeText ? resumeText.substring(0, 1500) : 'Not provided'}
+DSA Context from Notes: ${notesContext ? notesContext.substring(0, 1500) : 'Not provided'}
+
+Strictly return ONLY the JSON object. Example: {"questions": [{"question": "What is the difference between..."}]}`;
+
+        let jsonOutputFromGemini = await callGeminiOnPi(prompt, true);
+        const parsedResponse = JSON.parse(jsonOutputFromGemini);
+        
+        const questionsArray = parsedResponse.questions || parsedResponse;
+
+        if (!Array.isArray(questionsArray)) {
+            throw new Error("AI response did not contain a questions array");
+        }
+
+        res.json({ questions: questionsArray });
+
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Error in /api/interview/generate-questions:`, error.message);
+        res.status(500).json({ error: error.message || "Failed to generate interview questions." });
+    }
+});
+
+app.post('/api/interview/evaluate', async (req, res) => {
+    try {
+        const { answers } = req.body; // Array of { question, answer }
+        console.log(`[${new Date().toISOString()}] POST /api/interview/evaluate received.`);
+
+        if (!answers || !Array.isArray(answers)) {
+            return res.status(400).json({ error: "Answers must be provided as an array." });
+        }
+
+        const prompt = `You are an expert technical interviewer evaluating a candidate's answers.
+Please review the following questions and the candidate's answers.
+You MUST respond with a valid JSON object containing the following structure:
+{
+  "score": <number out of 100>,
+  "feedback": "<general feedback string>",
+  "areasForImprovement": ["<area 1>", "<area 2>"],
+  "detailedFeedback": [
+    { "question": "<question string>", "feedback": "<feedback string>", "isCorrect": <boolean> }
+  ]
+}
+
+Q&A Pairs:
+${answers.map((a, i) => `Q${i + 1}: ${a.question}\nA${i + 1}: ${a.answer}`).join('\n\n')}
+
+Strictly return ONLY the JSON object format described above.`;
+
+        let jsonOutputFromGemini = await callGeminiOnPi(prompt, true);
+        const parsedResponse = JSON.parse(jsonOutputFromGemini);
+        
+        res.json(parsedResponse);
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Error in /api/interview/evaluate:`, error.message);
+        res.status(500).json({ error: error.message || "Failed to evaluate interview answers." });
+    }
+});
+
+
+app.post('/api/check-code', async (req, res) => {
+    const { code, noteTitle, noteContext } = req.body || {};
+    console.log(`[${new Date().toISOString()}] POST /api/check-code received.`);
+    if (!code || typeof code !== 'string' || code.trim().length < 20) {
+        return res.status(400).json({ error: "Paste at least a short function before asking for a check." });
+    }
+    if (code.length > 12000) {
+        return res.status(400).json({ error: "Code is too long. Paste one solution, under 12,000 characters." });
+    }
+    const prompt = `You are a DSA interviewer reviewing a student's solution.
+Return Markdown with exactly these sections:
+## Time and space
+## Bugs and edge cases
+## Cleaner version
+
+Stay specific to the code. Do not invent a different problem. If the note context is empty, review the code on its own.
+
+Note title: ${noteTitle || 'Untitled'}
+Note context:
+${typeof noteContext === 'string' ? noteContext.slice(0, 2000) : ''}
+
+Code:
+${code}`;
+    try {
+        const review = await callGeminiOnPi(prompt);
+        res.json({ review });
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Error in /api/check-code:`, error.message);
+        res.status(500).json({ error: error.message || "Failed to check code." });
+    }
+});
 
 const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
 

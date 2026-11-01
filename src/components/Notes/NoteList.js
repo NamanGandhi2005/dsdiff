@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import NoteItem from './NoteItem';
 import { FilePlus, Search, FileText } from 'lucide-react'; // 'Filter' was unused, so it can be removed from imports if you wish
 import { Link } from 'react-router-dom';
+import { COMPANIES } from '../../features/study/companies';
 import LoadingSpinner from '../Common/LoadingSpinner';
 
 const NoteList = ({ notes, onDeleteNote, loading, error, searchTerm, setSearchTerm, currentFilters }) => {
@@ -15,6 +16,7 @@ const NoteList = ({ notes, onDeleteNote, loading, error, searchTerm, setSearchTe
 
     // Sanitize the topic filter from the URL parameter once
     const topicFilter = currentFilters?.topic?.toLowerCase().trim() || '';
+    const companyFilter = currentFilters?.company?.toLowerCase().trim() || '';
     const searchFilter = searchTerm?.toLowerCase().trim() || '';
 
     return notes.filter(note => {
@@ -44,7 +46,8 @@ const NoteList = ({ notes, onDeleteNote, loading, error, searchTerm, setSearchTe
       }
 
       // The note is included in the final list only if it passes both filters.
-      return searchMatch && topicMatch;
+      const companyMatch = !companyFilter || note.tags?.some((tag) => tag.toLowerCase() === companyFilter);
+      return searchMatch && topicMatch && companyMatch;
     });
   }, [notes, searchTerm, currentFilters]);
 
@@ -59,7 +62,8 @@ const NoteList = ({ notes, onDeleteNote, loading, error, searchTerm, setSearchTe
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 glass-card rounded-2xl border border-white/20 dark:border-white/10 shadow-sm">
+      <div className="flex flex-col gap-4 p-4 glass-card rounded-2xl border border-white/20 dark:border-white/10 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="relative w-full sm:max-w-xs">
           <input
             type="text"
@@ -85,19 +89,39 @@ const NoteList = ({ notes, onDeleteNote, loading, error, searchTerm, setSearchTe
           <FilePlus size={18} className="mr-2" />
           Create New Note
         </Link>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => currentFilters?.onCompanyChange?.('')}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold ${!currentFilters?.company ? 'bg-indigo-600 text-white' : 'bg-black/5 dark:bg-white/10 text-text-light dark:text-text-dark'}`}
+          >
+            All companies
+          </button>
+          {COMPANIES.map((company) => (
+            <button
+              key={company}
+              type="button"
+              onClick={() => currentFilters?.onCompanyChange?.(company)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold ${currentFilters?.company === company ? 'bg-indigo-600 text-white' : 'bg-black/5 dark:bg-white/10 text-text-light dark:text-text-dark'}`}
+            >
+              {company}
+            </button>
+          ))}
+        </div>
       </div>
 
       {filteredNotes.length === 0 && !loading && (
         <div className="text-center py-10">
           <FileText size={48} className="mx-auto text-gray-400 dark:text-gray-500" />
           <h3 className="mt-2 text-xl font-medium text-text-light dark:text-text-dark">
-            { (searchTerm || currentFilters?.topic) ? 'No notes match your filters.' : 'No notes yet.' }
+            { (searchTerm || currentFilters?.topic || currentFilters?.company) ? 'No notes match your filters.' : 'No notes yet.' }
           </h3>
           <p className="mt-1 text-sm text-text-muted-light dark:text-text-muted-dark">
-            { (searchTerm || currentFilters?.topic) ? 'Try a different search or clear filters.' : 'Get started by creating a new note.' }
+            { (searchTerm || currentFilters?.topic || currentFilters?.company) ? 'Try a different search or clear filters. Company filters match a tag with that exact name.' : 'Get started by creating a new note.' }
           </p>
           {/* Only show "Create Your First Note" button if there are no notes at all and no filters active */}
-          {notes.length === 0 && !searchTerm && !currentFilters?.topic && (
+          {notes.length === 0 && !searchTerm && !currentFilters?.topic && !currentFilters?.company && (
              <Link
                 to="/notes/new"
                 className="mt-4 inline-flex items-center px-4 py-2 bg-primary hover:bg-primary-dark text-white font-semibold rounded-md shadow-sm transition-colors"

@@ -4,6 +4,7 @@ import notesReducer from '../features/notes/notesSlice';
 import themeReducer from '../features/theme/themeSlice';
 import topicsReducer from '../features/dsaTopics/topicsSlice';
 import aiReducer from '../features/ai/aiSlice'; // Ensure this is imported
+import studyReducer from '../features/study/studySlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     theme: themeReducer,
     topics: topicsReducer,
     ai: aiReducer, // Add the AI reducer
+    study: studyReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

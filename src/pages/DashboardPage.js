@@ -1,12 +1,26 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import TopicsDashboard from '../components/Dashboard/TopicDashboard';
+import TodayPlan from '../components/Dashboard/TodayPlan';
+import StudyStreak from '../components/Dashboard/StudyStreak';
 import DailyTip from '../components/AI/DailyTip';
 import { Link } from 'react-router-dom';
 import { PlusCircle, BookOpen } from 'lucide-react';
+import { fetchNotes } from '../features/notes/notesSlice';
+import { fetchMistakes, fetchStudyDays } from '../features/study/studySlice';
+import { fetchTopics } from '../features/dsaTopics/topicsSlice';
 
 const DashboardPage = () => {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    dispatch(fetchNotes(user.uid));
+    dispatch(fetchMistakes(user.uid));
+    dispatch(fetchStudyDays(user.uid));
+    dispatch(fetchTopics());
+  }, [dispatch, user?.uid]);
 
   return (
     <div className="space-y-8 relative z-10">
@@ -41,6 +55,8 @@ const DashboardPage = () => {
         </div>
       </div>
 
+      <StudyStreak />
+      <TodayPlan />
       <TopicsDashboard />
       {/* You can add more sections here, like recent notes, upcoming goals, etc. */}
     </div>

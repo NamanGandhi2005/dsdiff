@@ -17,7 +17,8 @@ export const summarizeTextOnPi = (text) => apiClient.post('/api/summarize', { te
 export const generateQuizFromNoteOnPi = (noteContent) => apiClient.post('/api/generate-quiz', { text: noteContent });
 export const generateNoteFromProblemOnPi = (problemText) => apiClient.post('/api/generate-note-from-problem', { problemText }); 
 export const explainDsaTopicOnPi = (topicName) => apiClient.post('/api/explain-topic', { topicName }); 
-export const fetchLeetCodeProblem = (problemId) => apiClient.post('/api/leetcode-problem', { problemId }); 
+export const fetchLeetCodeProblem = (problemId) => apiClient.post('/api/leetcode-problem', { problemId });
+export const checkCodeOnPi = ({ code, noteTitle, noteContext }) => apiClient.post('/api/check-code', { code, noteTitle, noteContext }); 
 
 // You might want to add error handling interceptors to apiClient if needed
 export default apiClient;

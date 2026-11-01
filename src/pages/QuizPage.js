@@ -85,7 +85,7 @@ const QuizPage = () => {
         <Brain size={32} className="mr-3 text-primary" /> AI Quiz Time!
       </h1>
       {currentNote && currentNote.content ? (
-        <QuizView noteContent={currentNote.content} noteTitle={currentNote.title} />
+        <QuizView noteContent={currentNote.content} noteTitle={currentNote.title} noteId={currentNote.id} />
       ) : (
         <p className="text-center text-text-muted-light dark:text-text-muted-dark">
           Note content is empty or unavailable. Cannot generate quiz.

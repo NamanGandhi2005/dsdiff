@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { generateQuizFromNote, clearAiData } from '../../features/ai/aiSlice'; // Ensure path is correct
+import { addMistake, recordStudyDay } from '../../features/study/studySlice';
 import { HelpCircle, CheckCircle, XCircle, Loader2, AlertCircle, Brain, Lightbulb, RefreshCw } from 'lucide-react'; // XCircle is unused if not needed
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../Common/LoadingSpinner'; // Ensure path is correct
 
-const QuizView = ({ noteContent, noteTitle }) => {
+const QuizView = ({ noteContent, noteTitle, noteId }) => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { quizQuestions, loading, error } = useSelector((state) => ({
     quizQuestions: state.ai.quizQuestions,
     loading: state.ai.loading.generateQuiz,
@@ -17,6 +19,7 @@ const QuizView = ({ noteContent, noteTitle }) => {
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
+  const savedResult = useRef(false);
 
   useEffect(() => {
     dispatch(clearAiData('quizQuestions'));
@@ -24,7 +27,29 @@ const QuizView = ({ noteContent, noteTitle }) => {
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
     setQuizStarted(false);
+    savedResult.current = false;
   }, [noteContent, dispatch]);
+
+  useEffect(() => {
+    if (!showResults || savedResult.current || !user?.uid || !Array.isArray(quizQuestions)) return;
+    savedResult.current = true;
+    quizQuestions.forEach((question, index) => {
+      if (!question?.question || selectedAnswers[index] === question.correctAnswer) return;
+      dispatch(addMistake({
+        userId: user.uid,
+        noteId,
+        noteTitle,
+        question: question.question,
+        options: question.options || [],
+        correctAnswer: question.correctAnswer,
+        userAnswer: selectedAnswers[index] || '',
+        explanation: question.explanation || '',
+      }));
+    });
+    dispatch(recordStudyDay(user.uid));
+    const missed = quizQuestions.filter((question, index) => selectedAnswers[index] !== question?.correctAnswer).length;
+    if (missed > 0) toast.success(`${missed} missed question${missed === 1 ? '' : 's'} saved to your mistake book.`);
+  }, [showResults, quizQuestions, selectedAnswers, dispatch, user?.uid, noteId, noteTitle]);
 
   const handleGenerateQuiz = async () => {
     if (!noteContent || noteContent.trim().length < 100) {
@@ -36,6 +61,7 @@ const QuizView = ({ noteContent, noteTitle }) => {
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
     setQuizStarted(false); // Ensure it's false before dispatch
+    savedResult.current = false;
     const resultAction = await dispatch(generateQuizFromNote(noteContent));
     if (generateQuizFromNote.fulfilled.match(resultAction)) {
       // Check if payload is an array AND has items

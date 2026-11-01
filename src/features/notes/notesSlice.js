@@ -182,6 +182,7 @@ export const deleteNote = createAsyncThunk(
     if (!noteId) return rejectWithValue('Note ID is required for deletion.');
     try {
       await deleteDoc(doc(db, 'notes', noteId));
+      await deleteDoc(doc(db, 'publicNotes', noteId)).catch(() => {});
       return noteId; // Return the ID of the deleted note
     } catch (error) {
       console.error("DELETENOTE THUNK FIRESTORE ERROR:", error);
@@ -220,6 +221,17 @@ const notesSlice = createSlice({
     },
     setSearchTerm: (state, action) => {
       state.filters.searchTerm = action.payload;
+    },
+    applyNotePatch: (state, action) => {
+      const { id, fields } = action.payload || {};
+      if (!id || !fields) return;
+      const index = state.notesList.findIndex((note) => note.id === id);
+      if (index !== -1) {
+        state.notesList[index] = { ...state.notesList[index], ...fields };
+      }
+      if (state.currentNote?.id === id) {
+        state.currentNote = { ...state.currentNote, ...fields };
+      }
     },
   },
   extraReducers: (builder) => {
@@ -261,10 +273,10 @@ const notesSlice = createSlice({
       .addCase(updateNote.fulfilled, (state, action) => {
         const index = state.notesList.findIndex(note => note.id === action.payload.id);
         if (index !== -1) {
-          state.notesList[index] = action.payload; // action.payload is the serialized updated note
+          state.notesList[index] = { ...state.notesList[index], ...action.payload };
         }
         if (state.currentNote?.id === action.payload.id) {
-            state.currentNote = action.payload;
+            state.currentNote = { ...state.currentNote, ...action.payload };
         }
         state.loading = false;
         state.error = null;
@@ -295,5 +307,5 @@ const notesSlice = createSlice({
   },
 });
 
-export const { setCurrentNote, clearCurrentNote, setSearchTerm } = notesSlice.actions;
+export const { setCurrentNote, clearCurrentNote, setSearchTerm, applyNotePatch } = notesSlice.actions;
 export default notesSlice.reducer;

@@ -28,6 +28,16 @@ import ViewNotePage from './pages/ViewNotePage';
 import QuizPage from './pages/QuizPage';
 import SettingsPage from './pages/SettingsPage';
 import TopicExplorerPage from './pages/TopicExplorerPage'; // AI Topic Explainer page
+import InterviewSetupPage from './pages/InterviewSetupPage';
+import InterviewSessionPage from './pages/InterviewSessionPage';
+import InterviewResultsPage from './pages/InterviewResultsPage';
+import PracticePage from './pages/PracticePage';
+import TodayPage from './pages/TodayPage';
+import ReviewPage from './pages/ReviewPage';
+import MistakesPage from './pages/MistakesPage';
+import PatternsPage from './pages/PatternsPage';
+import InterviewHistoryPage from './pages/InterviewHistoryPage';
+import PublicNotePage from './pages/PublicNotePage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>(); // Typed dispatch
@@ -107,6 +117,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             {/* If user is logged in, redirect from login/signup to dashboard */}
+            <Route path="/p/:noteId" element={<PublicNotePage />} />
             <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <LoginPage />} />
             <Route path="/signup" element={user ? <Navigate to="/dashboard" /> : <SignUpPage />} />
 
@@ -119,6 +130,16 @@ function App() {
               <Route path="/notes/:noteId" element={<ViewNotePage />} />
               <Route path="/quiz/:noteId" element={<QuizPage />} />
               <Route path="/ai/explain-topic" element={<TopicExplorerPage />} />
+              <Route path="/interview/setup" element={<InterviewSetupPage />} />
+              <Route path="/interview/session" element={<InterviewSessionPage />} />
+              <Route path="/interview/results" element={<InterviewResultsPage />} />
+              <Route path="/interview/history" element={<InterviewHistoryPage />} />
+              <Route path="/practice" element={<PracticePage />} />
+              <Route path="/today" element={<TodayPage />} />
+              <Route path="/review" element={<ReviewPage />} />
+              <Route path="/mistakes" element={<MistakesPage />} />
+              <Route path="/patterns" element={<PatternsPage />} />
+              <Route path="/patterns/:patternId" element={<PatternsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
             

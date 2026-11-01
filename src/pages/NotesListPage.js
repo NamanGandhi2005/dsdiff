@@ -11,8 +11,9 @@ const NotesListPage = () => {
   const { user } = useSelector((state) => state.auth);
   const { notesList, loading, error, filters } = useSelector((state) => state.notes);
   
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const topicFilterFromURL = searchParams.get('topic');
+  const companyFilterFromURL = searchParams.get('company') || '';
 
   // Local search term for this page, distinct from global filter if needed, or sync them.
   // For simplicity, let's use the global search term from Redux.
@@ -51,7 +52,13 @@ const NotesListPage = () => {
   // Construct currentFilters for NoteList
   const currentFiltersForList = {
       topic: topicFilterFromURL || '', // Use URL param for topic filtering
-      // ... add other filters if you implement them (dateRange, etc.)
+      company: companyFilterFromURL,
+      onCompanyChange: (company) => {
+        const next = new URLSearchParams(searchParams);
+        if (company) next.set('company', company);
+        else next.delete('company');
+        setSearchParams(next);
+      },
   };
 
 
@@ -65,6 +72,7 @@ const NotesListPage = () => {
       <p className="text-text-muted-light dark:text-text-muted-dark mb-6">
         Manage all your notes in DSDIFF. Search, filter, and stay organized on your learning path.
         {topicFilterFromURL && <span className="block mt-1">Currently filtering by topic: <strong className="text-primary">{topicFilterFromURL}</strong></span>}
+        {companyFilterFromURL && <span className="block mt-1">Company tag: <strong className="text-primary">{companyFilterFromURL}</strong>. Add that word as a tag on a note to include it.</span>}
       </p>
 
       <NoteList

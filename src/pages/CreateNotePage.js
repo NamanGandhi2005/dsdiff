@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { addNote } from '../features/notes/notesSlice';
+import { recordStudyDay } from '../features/study/studySlice';
 import { updateTopicProgress } from '../features/dsaTopics/topicsSlice';
 import NoteEditor from '../components/Notes/NoteEditor';
 import GeminiNoteGenerator from '../components/AI/GeminiNoteGenerator';
@@ -120,6 +121,7 @@ const CreateNotePage = () => {
     }));
     if (addNote.fulfilled.match(resultAction)) {
       toast.success('Note created successfully!');
+      dispatch(recordStudyDay(user.uid));
       dispatch(updateTopicProgress());
       if (resultAction.payload && resultAction.payload.id) {
         navigate(`/notes/${resultAction.payload.id}`);
